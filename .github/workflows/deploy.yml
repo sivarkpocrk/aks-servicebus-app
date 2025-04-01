@@ -1,0 +1,59 @@
+name: AKS Service Bus App CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Set up Azure CLI
+    - name: Set up Azure CLI
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Log in to Azure Container Registry (ACR)
+    - name: Log in to ACR
+      run: |
+        az acr login --name myregistry
+
+    # Build and push Docker image
+    - name: Build and push Docker image
+      run: |
+        docker build -t myregistry.azurecr.io/transaction-processor:latest ./app
+        docker push myregistry.azurecr.io/transaction-processor:latest
+
+    # Deploy Service Bus Resources
+    - name: Run Terraform
+      working-directory: ./terraform
+      run: |
+        terraform init
+        terraform apply -auto-approve
+
+    # Run Azure CLI scripts for Service Bus setup
+    - name: Create Service Bus Namespaces
+      run: |
+        bash scripts/create-servicebus.sh
+
+    - name: Configure Geo-Disaster Recovery
+      run: |
+        bash scripts/create-geo-dr.sh
+
+    # Deploy to AKS
+    - name: Deploy to AKS
+      run: |
+        bash scripts/aks-deploy.sh
+
+    # Verify deployment
+    - name: Verify Deployment
+      run: |
+        kubectl get pods -n transaction-namespace
