@@ -89,32 +89,37 @@ jobs:
     - name: Grant AKS access to ACR if not present
       run: |
         # Get the Client ID of the AKS cluster
-        CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query servicePrincipalProfile.clientId -o tsv)
+        CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query identityProfile.kubeletidentity.clientId -o tsv)
 
-        # Check if Client ID is empty, indicating the use of Managed Identity
-        if [ -z "$CLIENT_ID" ]; then
-          echo "Service Principal not found, checking for Managed Identity..."
-          CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query identityProfile.kubeletidentity.clientId -o tsv)
-        fi
-
-        # Validate that we successfully obtained a Client ID
-        if [ -z "$CLIENT_ID" ]; then
-          echo "Error: Unable to retrieve Client ID for AKS cluster. Please verify the AKS setup."
+        # If CLIENT_ID is empty, it means it is not configured properly
+        if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" == "msi" ]; then
+          echo "Error: Unable to retrieve valid Client ID for AKS cluster. Please check the AKS setup."
           exit 1
         fi
 
-        echo "Client ID: $CLIENT_ID"
+        echo "Retrieved Client ID: $CLIENT_ID"
+
+        # Get the Object ID of the managed identity (for MSI-based AKS clusters)
+        OBJECT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query identityProfile.kubeletidentity.objectId -o tsv)
+
+        # Validate that the Object ID is not empty
+        if [ -z "$OBJECT_ID" ]; then
+          echo "Error: Unable to retrieve Object ID for the managed identity."
+          exit 1
+        fi
+
+        echo "Retrieved Object ID: $OBJECT_ID"
 
         # Get the ACR ID
         ACR_ID=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query id -o tsv)
 
         # Check if the role assignment already exists
-        ROLE_EXISTS=$(az role assignment list --assignee $CLIENT_ID --scope $ACR_ID --role "AcrPull" -o tsv)
+        ROLE_EXISTS=$(az role assignment list --assignee $OBJECT_ID --scope $ACR_ID --role "AcrPull" -o tsv)
 
         # Grant access if the role assignment does not exist
         if [ -z "$ROLE_EXISTS" ]; then
           echo "Granting AcrPull role to AKS cluster..."
-          az role assignment create --assignee $CLIENT_ID --role "AcrPull" --scope $ACR_ID
+          az role assignment create --assignee $OBJECT_ID --role "AcrPull" --scope $ACR_ID
           echo "Access granted successfully."
         else
           echo "AcrPull role already assigned to the AKS cluster."
