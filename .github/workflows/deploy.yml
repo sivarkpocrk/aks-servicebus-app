@@ -23,22 +23,81 @@ jobs:
 
     - name: Check if ACR exists
       run: |
-        if ! az acr show --name myregistry &> /dev/null; then
-          echo "ACR 'myregistry' does not exist. Creating..."
-          az acr create --name myregistry --resource-group MyResourceGroup --sku Basic --location eastus
+        if ! az acr show --name akssivarg01 &> /dev/null; then
+          echo "ACR 'akssivarg01' does not exist. Creating..."
+          az acr create --name akssivarg01 --resource-group MyResourceGroup --sku Basic --location eastus
         else
-          echo "ACR 'myregistry' already exists."
+          echo "ACR 'akssivarg01' already exists."
         fi
 
-    - name: Grant AKS access to ACR
+    - name: Check if AKS Cluster exists and create if not
       run: |
-        CLIENT_ID=$(az aks show --resource-group MyResourceGroup --name MyAKSCluster --query servicePrincipalProfile.clientId -o tsv)
-        az role assignment create --assignee $CLIENT_ID --role "AcrPull" --scope $(az acr show --name myregistry --query id -o tsv)
+        # Set variables
+        RESOURCE_GROUP="MyResourceGroup"
+        LOCATION="eastus"
+        AKS_CLUSTER_NAME="AKSSivaCluster"
+        ACR_NAME="akssivarg01"
+        AKS_NODE_COUNT=3
+        AKS_NODE_SIZE="Standard_DS2_v2"
+        AKS_VERSION="1.25.0"  # Update this as per your requirement
+
+        # Check if the AKS cluster exists
+        if ! az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME &> /dev/null; then
+          echo "AKS cluster '$AKS_CLUSTER_NAME' does not exist. Creating..."
+          az aks create \
+            --resource-group $RESOURCE_GROUP \
+            --name $AKS_CLUSTER_NAME \
+            --node-count $AKS_NODE_COUNT \
+            --node-vm-size $AKS_NODE_SIZE \
+            --kubernetes-version $AKS_VERSION \
+            --generate-ssh-keys \
+            --location $LOCATION
+          echo "AKS cluster created successfully."
+        else
+          echo "AKS cluster '$AKS_CLUSTER_NAME' already exists."
+        fi
+
+    - name: Check if ACR exists and create if not
+      run: |
+        # Check if the ACR exists
+        if ! az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP &> /dev/null; then
+          echo "ACR '$ACR_NAME' does not exist. Creating..."
+          az acr create --name $ACR_NAME --resource-group $RESOURCE_GROUP --sku Basic --location $LOCATION
+          echo "ACR created successfully."
+        else
+          echo "ACR '$ACR_NAME' already exists."
+        fi
+
+    - name: Grant AKS access to ACR if not present
+      run: |
+        # Get the Client ID of the AKS cluster
+        CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query servicePrincipalProfile.clientId -o tsv)
+
+        # If Managed Identity is used instead of Service Principal
+        if [ -z "$CLIENT_ID" ]; then
+          CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query identityProfile.kubeletidentity.clientId -o tsv)
+        fi
+
+        # Get the ACR ID
+        ACR_ID=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query id -o tsv)
+
+        # Check if the role assignment already exists
+        ROLE_EXISTS=$(az role assignment list --assignee $CLIENT_ID --scope $ACR_ID --role "AcrPull" -o tsv)
+
+        # Grant access if the role assignment does not exist
+        if [ -z "$ROLE_EXISTS" ]; then
+          echo "Granting AcrPull role to AKS cluster..."
+          az role assignment create --assignee $CLIENT_ID --role "AcrPull" --scope $ACR_ID
+          echo "Access granted successfully."
+        else
+          echo "AcrPull role already assigned to the AKS cluster."
+        fi
+
 
     # Log in to Azure Container Registry (ACR)
     - name: Log in to ACR
       run: |
-        az acr login --name myregistry
+        az acr login --name $ACR_NAME #akssivarg01
 
     # Build and push Docker image
     - name: Build and push Docker image
