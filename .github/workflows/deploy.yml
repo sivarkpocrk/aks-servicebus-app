@@ -39,7 +39,7 @@ jobs:
         ACR_NAME="akssivarg01"
         AKS_NODE_COUNT=3
         AKS_NODE_SIZE="Standard_DS2_v2"
-        AKS_VERSION="1.25.0"  # Update this as per your requirement
+        AKS_VERSION="1.32.0"  # Update this as per your requirement
 
         # Register the Microsoft.ContainerService namespace if not already registered
         REGISTRATION_STATE=$(az provider show --namespace Microsoft.ContainerService --query "registrationState" -o tsv)
