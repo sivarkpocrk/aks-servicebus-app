@@ -1,7 +1,7 @@
 # Use a lightweight base image with Terraform
 FROM hashicorp/terraform:1.5.7
 
-# Install Azure CLI
+# Install Azure CLI and other necessary tools
 RUN apk update && \
     apk add --no-cache curl bash jq && \
     curl -sL https://aka.ms/InstallAzureCLIDeb | bash

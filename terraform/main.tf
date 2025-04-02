@@ -1,11 +1,18 @@
+# Unified main.tf
+
 terraform {
+  backend "azurerm" {
+    resource_group_name  = "MyResourceGroup"
+    storage_account_name = "akssiva"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
+  }
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "3.74.0"
     }
   }
-  required_version = ">= 1.0"
 }
 
 provider "azurerm" {
@@ -13,14 +20,14 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-# Create Resource Group
+# Resource Group (already exists, so use import if not in state)
 resource "azurerm_resource_group" "example" {
   name     = var.resource_group_name
   location = var.primary_location
   tags     = var.tags
 }
 
-# Create Primary Service Bus Namespace
+# Primary Service Bus Namespace
 resource "azurerm_servicebus_namespace" "primary" {
   name                = var.primary_namespace
   location            = var.primary_location
@@ -28,7 +35,7 @@ resource "azurerm_servicebus_namespace" "primary" {
   sku                 = "Standard"
 }
 
-# Create Secondary Service Bus Namespace
+# Secondary Service Bus Namespace
 resource "azurerm_servicebus_namespace" "secondary" {
   name                = var.secondary_namespace
   location            = var.secondary_location
@@ -36,17 +43,17 @@ resource "azurerm_servicebus_namespace" "secondary" {
   sku                 = "Standard"
 }
 
-# Create Service Bus Queue in Primary Namespace
+# Service Bus Queue
 resource "azurerm_servicebus_queue" "transaction" {
-  name                = var.queue_name
-  namespace_id        = azurerm_servicebus_namespace.primary.id
+  name         = var.queue_name
+  namespace_id = azurerm_servicebus_namespace.primary.id
 }
 
-# Geo Disaster Recovery Alias
+# Geo-Disaster Recovery Alias
 resource "azurerm_servicebus_georecovery_alias" "geo_dr" {
-  name                    = "TransactionAlias"
-  resource_group_name     = azurerm_resource_group.example.name
-  namespace_name          = azurerm_servicebus_namespace.primary.name
-  partner_namespace_id    = azurerm_servicebus_namespace.secondary.id
+  name                     = "TransactionAlias"
+  resource_group_name      = azurerm_resource_group.example.name
+  namespace_name           = azurerm_servicebus_namespace.primary.name
+  partner_namespace_id     = azurerm_servicebus_namespace.secondary.id
   requires_manual_failover = true
 }
