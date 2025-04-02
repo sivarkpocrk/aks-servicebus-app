@@ -91,9 +91,19 @@ jobs:
         # Get the Client ID of the AKS cluster
         CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query servicePrincipalProfile.clientId -o tsv)
 
+        # Check if Client ID is empty, indicating the use of Managed Identity
         if [ -z "$CLIENT_ID" ]; then
+          echo "Service Principal not found, checking for Managed Identity..."
           CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query identityProfile.kubeletidentity.clientId -o tsv)
         fi
+
+        # Validate that we successfully obtained a Client ID
+        if [ -z "$CLIENT_ID" ]; then
+          echo "Error: Unable to retrieve Client ID for AKS cluster. Please verify the AKS setup."
+          exit 1
+        fi
+
+        echo "Client ID: $CLIENT_ID"
 
         # Get the ACR ID
         ACR_ID=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query id -o tsv)
