@@ -17,7 +17,12 @@ terraform {
 
 provider "azurerm" {
   features {}
+
+  # Use environment variables for authentication
+  client_id       = var.client_id
+  client_secret   = var.client_secret
   subscription_id = var.subscription_id
+  tenant_id       = var.tenant_id
 }
 
 # Resource Group (already exists, so use import if not in state)

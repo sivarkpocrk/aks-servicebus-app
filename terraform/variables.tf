@@ -55,3 +55,20 @@ variable "tags" {
     owner       = "aks-servicebus-app"
   }
 }
+
+variable "client_id" {
+  description = "Azure Service Principal Client ID"
+}
+
+variable "client_secret" {
+  description = "Azure Service Principal Client Secret"
+}
+
+variable "tenant_id" {
+  description = "Azure Tenant ID"
+}
+
+variable "subscription_id" {
+  description = "Azure Subscription ID"
+}
+

@@ -33,6 +33,18 @@ jobs:
         echo "AKS_VERSION=1.32.0" >> $GITHUB_ENV
         echo "Variables set successfully."
 
+    # Set Terraform environment variables
+    - name: Set Terraform Environment Variables
+      run: |
+        echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+        echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
+        echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+        echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+        echo "TF_VAR_client_id=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+        echo "TF_VAR_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
+        echo "TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+        echo "TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+
     # - name: Set up Azure CLI with owner subscription
     #   uses: azure/login@v1
     #   with:
@@ -153,21 +165,30 @@ jobs:
         docker build -t $ACR_NAME.azurecr.io/transaction-processor:latest ./app
         docker push $ACR_NAME.azurecr.io/transaction-processor:latest
 
+    # Terraform Init
     - name: Terraform Init
       working-directory: ./terraform
       run: |
         terraform init
 
-      # Terraform Plan
+    # Terraform Plan
     - name: Terraform Plan
+      working-directory: ./terraform
       run: |
-        terraform plan
+        terraform plan -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+                       -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+                       -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+                       -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
 
     # Terraform Apply
     - name: Terraform Apply
       working-directory: ./terraform
       run: |
-        terraform apply -auto-approve
+        terraform apply -auto-approve -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+                       -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+                       -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+                       -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+
 
     # Run Azure CLI scripts for Service Bus setup
     - name: Create Service Bus Namespaces
