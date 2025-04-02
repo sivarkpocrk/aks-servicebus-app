@@ -154,6 +154,7 @@ jobs:
         docker push $ACR_NAME.azurecr.io/transaction-processor:latest
 
     - name: Terraform Init
+      working-directory: ./terraform
       run: |
         terraform init
 
@@ -164,6 +165,7 @@ jobs:
 
     # Terraform Apply
     - name: Terraform Apply
+      working-directory: ./terraform
       run: |
         terraform apply -auto-approve
 
