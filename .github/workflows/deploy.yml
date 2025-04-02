@@ -21,6 +21,20 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Check if ACR exists
+      run: |
+        if ! az acr show --name myregistry &> /dev/null; then
+          echo "ACR 'myregistry' does not exist. Creating..."
+          az acr create --name myregistry --resource-group MyResourceGroup --sku Basic --location eastus
+        else
+          echo "ACR 'myregistry' already exists."
+        fi
+
+    - name: Grant AKS access to ACR
+      run: |
+        CLIENT_ID=$(az aks show --resource-group MyResourceGroup --name MyAKSCluster --query servicePrincipalProfile.clientId -o tsv)
+        az role assignment create --assignee $CLIENT_ID --role "AcrPull" --scope $(az acr show --name myregistry --query id -o tsv)
+
     # Log in to Azure Container Registry (ACR)
     - name: Log in to ACR
       run: |

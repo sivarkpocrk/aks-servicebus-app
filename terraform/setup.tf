@@ -1,11 +1,16 @@
 terraform {
+  backend "azurerm" {
+    resource_group_name  = "MyResourceGroup"
+    storage_account_name = "terraformstatestorage"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
+  }
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "3.74.0"
     }
   }
-  required_version = ">= 1.0"
 }
 
 provider "azurerm" {
@@ -13,18 +18,11 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-# Create Resource Group
-resource "azurerm_resource_group" "example" {
-  name     = var.resource_group_name
-  location = var.primary_location
-  tags     = var.tags
-}
-
 # Create Primary Service Bus Namespace
 resource "azurerm_servicebus_namespace" "primary" {
   name                = var.primary_namespace
   location            = var.primary_location
-  resource_group_name = azurerm_resource_group.example.name
+  resource_group_name = var.resource_group_name
   sku                 = "Standard"
 }
 
@@ -32,7 +30,7 @@ resource "azurerm_servicebus_namespace" "primary" {
 resource "azurerm_servicebus_namespace" "secondary" {
   name                = var.secondary_namespace
   location            = var.secondary_location
-  resource_group_name = azurerm_resource_group.example.name
+  resource_group_name = var.resource_group_name
   sku                 = "Standard"
 }
 
@@ -44,9 +42,9 @@ resource "azurerm_servicebus_queue" "transaction" {
 
 # Geo Disaster Recovery Alias
 resource "azurerm_servicebus_georecovery_alias" "geo_dr" {
-  name                    = "TransactionAlias"
-  resource_group_name     = azurerm_resource_group.example.name
-  namespace_name          = azurerm_servicebus_namespace.primary.name
-  partner_namespace_id    = azurerm_servicebus_namespace.secondary.id
+  name                     = "TransactionAlias"
+  resource_group_name      = var.resource_group_name
+  namespace_name           = azurerm_servicebus_namespace.primary.name
+  partner_namespace_id     = azurerm_servicebus_namespace.secondary.id
   requires_manual_failover = true
 }
