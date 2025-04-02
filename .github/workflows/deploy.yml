@@ -41,6 +41,19 @@ jobs:
         AKS_NODE_SIZE="Standard_DS2_v2"
         AKS_VERSION="1.25.0"  # Update this as per your requirement
 
+        # Register the Microsoft.ContainerService namespace if not already registered
+        REGISTRATION_STATE=$(az provider show --namespace Microsoft.ContainerService --query "registrationState" -o tsv)
+
+        if [ "$REGISTRATION_STATE" != "Registered" ]; then
+          echo "Registering the Microsoft.ContainerService namespace..."
+          az provider register --namespace Microsoft.ContainerService
+          echo "Waiting for registration to complete..."
+          az provider show --namespace Microsoft.ContainerService --query "registrationState" -o tsv
+          echo "Namespace registered successfully."
+        else
+          echo "Microsoft.ContainerService namespace is already registered."
+        fi
+
         # Check if the AKS cluster exists
         if ! az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME &> /dev/null; then
           echo "AKS cluster '$AKS_CLUSTER_NAME' does not exist. Creating..."
@@ -56,6 +69,7 @@ jobs:
         else
           echo "AKS cluster '$AKS_CLUSTER_NAME' already exists."
         fi
+
 
     - name: Check if ACR exists and create if not
       run: |
