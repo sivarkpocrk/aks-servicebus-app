@@ -11,16 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Define common variables
+    # # Define common variables
+    # - name: Set environment variables
+    #   run: |
+    #     export RESOURCE_GROUP="MyResourceGroup"
+    #     export LOCATION="eastus"
+    #     export AKS_CLUSTER_NAME="AKSSivaCluster"
+    #     export ACR_NAME="akssivarg01"
+    #     export AKS_NODE_COUNT=3
+    #     export AKS_NODE_SIZE="Standard_DS2_v2"
+    #     export AKS_VERSION="1.32.0"
+    #     echo "Variables set successfully."
     - name: Set environment variables
       run: |
-        export RESOURCE_GROUP="MyResourceGroup"
-        export LOCATION="eastus"
-        export AKS_CLUSTER_NAME="AKSSivaCluster"
-        export ACR_NAME="akssivarg01"
-        export AKS_NODE_COUNT=3
-        export AKS_NODE_SIZE="Standard_DS2_v2"
-        export AKS_VERSION="1.32.0"
+        echo "RESOURCE_GROUP=MyResourceGroup" >> $GITHUB_ENV
+        echo "LOCATION=eastus" >> $GITHUB_ENV
+        echo "AKS_CLUSTER_NAME=AKSSivaCluster" >> $GITHUB_ENV
+        echo "ACR_NAME=akssivarg01" >> $GITHUB_ENV
+        echo "AKS_NODE_COUNT=3" >> $GITHUB_ENV
+        echo "AKS_NODE_SIZE=Standard_DS2_v2" >> $GITHUB_ENV
+        echo "AKS_VERSION=1.32.0" >> $GITHUB_ENV
         echo "Variables set successfully."
 
     # Checkout the code
