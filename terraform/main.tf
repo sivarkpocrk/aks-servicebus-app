@@ -55,10 +55,8 @@ resource "azurerm_servicebus_queue" "transaction" {
 }
 
 # Geo-Disaster Recovery Alias
-resource "azurerm_servicebus_alias" "geo_dr" {
+resource "azurerm_servicebus_namespace_disaster_recovery_config" "geo_dr" {
   name                     = "TransactionAlias"
-  resource_group_name      = azurerm_resource_group.example.name
-  namespace_name           = azurerm_servicebus_namespace.primary.name
+  primary_namespace_id     = azurerm_servicebus_namespace.primary.id
   partner_namespace_id     = azurerm_servicebus_namespace.secondary.id
-  requires_manual_failover = true
 }
