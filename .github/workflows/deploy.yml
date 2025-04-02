@@ -11,6 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Define common variables
+    - name: Set environment variables
+      run: |
+        export RESOURCE_GROUP="MyResourceGroup"
+        export LOCATION="eastus"
+        export AKS_CLUSTER_NAME="AKSSivaCluster"
+        export ACR_NAME="akssivarg01"
+        export AKS_NODE_COUNT=3
+        export AKS_NODE_SIZE="Standard_DS2_v2"
+        export AKS_VERSION="1.32.0"
+        echo "Variables set successfully."
+
     # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v3
@@ -21,29 +33,22 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # Check if ACR exists
     - name: Check if ACR exists
       run: |
-        if ! az acr show --name akssivarg01 &> /dev/null; then
-          echo "ACR 'akssivarg01' does not exist. Creating..."
-          az acr create --name akssivarg01 --resource-group MyResourceGroup --sku Basic --location eastus
+        if ! az acr show --name $ACR_NAME &> /dev/null; then
+          echo "ACR '$ACR_NAME' does not exist. Creating..."
+          az acr create --name $ACR_NAME --resource-group $RESOURCE_GROUP --sku Basic --location $LOCATION
+          echo "ACR created successfully."
         else
-          echo "ACR 'akssivarg01' already exists."
+          echo "ACR '$ACR_NAME' already exists."
         fi
 
+    # Check if AKS Cluster exists and create if not
     - name: Check if AKS Cluster exists and create if not
       run: |
-        # Set variables
-        RESOURCE_GROUP="MyResourceGroup"
-        LOCATION="eastus"
-        AKS_CLUSTER_NAME="AKSSivaCluster"
-        ACR_NAME="akssivarg01"
-        AKS_NODE_COUNT=3
-        AKS_NODE_SIZE="Standard_DS2_v2"
-        AKS_VERSION="1.32.0"  # Update this as per your requirement
-
         # Register the Microsoft.ContainerService namespace if not already registered
         REGISTRATION_STATE=$(az provider show --namespace Microsoft.ContainerService --query "registrationState" -o tsv)
-
         if [ "$REGISTRATION_STATE" != "Registered" ]; then
           echo "Registering the Microsoft.ContainerService namespace..."
           az provider register --namespace Microsoft.ContainerService
@@ -70,24 +75,12 @@ jobs:
           echo "AKS cluster '$AKS_CLUSTER_NAME' already exists."
         fi
 
-
-    - name: Check if ACR exists and create if not
-      run: |
-        # Check if the ACR exists
-        if ! az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP &> /dev/null; then
-          echo "ACR '$ACR_NAME' does not exist. Creating..."
-          az acr create --name $ACR_NAME --resource-group $RESOURCE_GROUP --sku Basic --location $LOCATION
-          echo "ACR created successfully."
-        else
-          echo "ACR '$ACR_NAME' already exists."
-        fi
-
+    # Grant AKS access to ACR if not present
     - name: Grant AKS access to ACR if not present
       run: |
         # Get the Client ID of the AKS cluster
         CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query servicePrincipalProfile.clientId -o tsv)
 
-        # If Managed Identity is used instead of Service Principal
         if [ -z "$CLIENT_ID" ]; then
           CLIENT_ID=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query identityProfile.kubeletidentity.clientId -o tsv)
         fi
@@ -107,17 +100,16 @@ jobs:
           echo "AcrPull role already assigned to the AKS cluster."
         fi
 
-
     # Log in to Azure Container Registry (ACR)
     - name: Log in to ACR
       run: |
-        az acr login --name $ACR_NAME #akssivarg01
+        az acr login --name $ACR_NAME
 
     # Build and push Docker image
     - name: Build and push Docker image
       run: |
-        docker build -t myregistry.azurecr.io/transaction-processor:latest ./app
-        docker push myregistry.azurecr.io/transaction-processor:latest
+        docker build -t $ACR_NAME.azurecr.io/transaction-processor:latest ./app
+        docker push $ACR_NAME.azurecr.io/transaction-processor:latest
 
     # Deploy Service Bus Resources
     - name: Run Terraform
