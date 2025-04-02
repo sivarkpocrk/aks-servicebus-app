@@ -55,7 +55,7 @@ resource "azurerm_servicebus_queue" "transaction" {
 }
 
 # Geo-Disaster Recovery Alias
-resource "azurerm_servicebus_georecovery_alias" "geo_dr" {
+resource "azurerm_servicebus_alias" "geo_dr" {
   name                     = "TransactionAlias"
   resource_group_name      = azurerm_resource_group.example.name
   namespace_name           = azurerm_servicebus_namespace.primary.name
