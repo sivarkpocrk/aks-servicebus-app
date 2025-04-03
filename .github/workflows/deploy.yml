@@ -94,7 +94,6 @@ jobs:
         az provider register --namespace Microsoft.ContainerRegistry
         az provider register --namespace Microsoft.OperationalInsights
         az provider register --namespace Microsoft.Insights
-        az provider register --namespace Microsoft.TimeSeriesInsights
 
     # Check if AKS Cluster exists and create if not
     - name: Check if AKS Cluster exists and create if not
