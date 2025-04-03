@@ -19,10 +19,11 @@ provider "azurerm" {
   features {}
 
   # Use environment variables for authentication
-  client_id       = var.client_id
-  client_secret   = var.client_secret
-  subscription_id = var.subscription_id
-  tenant_id       = var.tenant_id
+  client_id                  = var.client_id
+  client_secret              = var.client_secret
+  subscription_id            = var.subscription_id
+  tenant_id                  = var.tenant_id
+  skip_provider_registration = true
 }
 
 # Resource Group (already exists, so use import if not in state)
@@ -56,7 +57,7 @@ resource "azurerm_servicebus_queue" "transaction" {
 
 # Geo-Disaster Recovery Alias
 resource "azurerm_servicebus_namespace_disaster_recovery_config" "geo_dr" {
-  name                     = "TransactionAlias"
-  primary_namespace_id     = azurerm_servicebus_namespace.primary.id
-  partner_namespace_id     = azurerm_servicebus_namespace.secondary.id
+  name                 = "TransactionAlias"
+  primary_namespace_id = azurerm_servicebus_namespace.primary.id
+  partner_namespace_id = azurerm_servicebus_namespace.secondary.id
 }

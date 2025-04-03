@@ -83,6 +83,19 @@ jobs:
           echo "ACR '$ACR_NAME' already exists."
         fi
 
+    # Register All Azure Resource Providers
+    - name: Register Azure Resource Providers
+      run: |
+        # for namespace in $(az provider list --query "[?registrationState=='NotRegistered'].namespace" -o tsv); do
+        #   az provider register --namespace "$namespace"
+        # done
+        az provider register --namespace Microsoft.ServiceBus
+        az provider register --namespace Microsoft.ContainerService
+        az provider register --namespace Microsoft.ContainerRegistry
+        az provider register --namespace Microsoft.OperationalInsights
+        az provider register --namespace Microsoft.Insights
+        az provider register --namespace Microsoft.TimeSeriesInsights
+
     # Check if AKS Cluster exists and create if not
     - name: Check if AKS Cluster exists and create if not
       run: |
