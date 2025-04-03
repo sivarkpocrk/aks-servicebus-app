@@ -183,6 +183,17 @@ jobs:
       run: |
         terraform init
 
+    # Import Resource Group if it exists
+    - name: Import Existing Resource Group
+      working-directory: ./terraform
+      run: |
+          if az group show --name $RESOURCE_GROUP &> /dev/null; then
+            echo "Resource Group '$RESOURCE_GROUP' already exists. Importing to Terraform..."
+            terraform import azurerm_resource_group.example /subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP || true
+          else
+            echo "Resource Group does not exist. Proceeding with creation."
+          fi
+
     # Terraform Plan
     - name: Terraform Plan
       working-directory: ./terraform
