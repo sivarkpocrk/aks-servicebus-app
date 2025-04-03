@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: transaction-processor
+  namespace: transaction-namespace
 spec:
   replicas: 2
   selector:
@@ -13,5 +14,23 @@ spec:
         app: transaction-processor
     spec:
       containers:
-      - name: processor
+      - name: transaction-processor-container  # Unique container name
         image: akssivarg01.azurecr.io/transaction-processor:latest
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+        - name: PRIMARY_SERVICE_BUS_CONNECTION
+          valueFrom:
+            secretKeyRef:
+              name: servicebus-secrets
+              key: primary-connection
+        - name: SECONDARY_SERVICE_BUS_CONNECTION
+          valueFrom:
+            secretKeyRef:
+              name: servicebus-secrets
+              key: secondary-connection
