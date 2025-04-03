@@ -31,6 +31,7 @@ jobs:
         echo "AKS_NODE_COUNT=3" >> $GITHUB_ENV
         echo "AKS_NODE_SIZE=Standard_DS2_v2" >> $GITHUB_ENV
         echo "AKS_VERSION=1.32.0" >> $GITHUB_ENV
+        echo "TF_STORAGE_NAME=akssiva" >> $GITHUB_ENV
         echo "Variables set successfully."
 
     # Set Terraform environment variables
@@ -176,6 +177,27 @@ jobs:
       run: |
         docker build -t $ACR_NAME.azurecr.io/transaction-processor:latest ./app
         docker push $ACR_NAME.azurecr.io/transaction-processor:latest
+
+    # Ensure the storage account exists before running terraform init
+    - name: Create Terraform State Storage Account
+      run: |
+        if ! az storage account check-name --name $TF_STORAGE_NAME --query "nameAvailable" -o tsv; then
+          echo "Storage account $TF_STORAGE_NAME already exists."
+        else
+          echo "Creating storage account $TF_STORAGE_NAME..."
+          az storage account create \
+            --name $TF_STORAGE_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --location $LOCATION \
+            --sku Standard_LRS
+          echo "Storage account created successfully."
+
+          # Create the container for the state file
+          az storage container create \
+            --name tfstate \
+            --account-name $TF_STORAGE_NAME
+          echo "Terraform state container created."
+        fi
 
     # Terraform Init
     - name: Terraform Init

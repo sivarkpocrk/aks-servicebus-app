@@ -33,22 +33,6 @@ resource "azurerm_resource_group" "example" {
   tags     = var.tags
 }
 
-# Storage Account for Terraform State
-resource "azurerm_storage_account" "tfstate" {
-  resource_group_name      = var.resource_group_name
-  name                     = var.backend_storage_account_name
-  location                 = var.primary_location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-}
-
-# Storage Container for Terraform State
-resource "azurerm_storage_container" "tfstate" {
-  name                  = var.backend_container_name
-  storage_account_name  = azurerm_storage_account.tfstate.name
-  container_access_type = "private"
-}
-
 # Primary Service Bus Namespace
 resource "azurerm_servicebus_namespace" "primary" {
   name                = var.primary_namespace
