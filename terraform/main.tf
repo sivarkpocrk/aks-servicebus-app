@@ -38,7 +38,8 @@ resource "azurerm_servicebus_namespace" "primary" {
   name                = var.primary_namespace
   location            = var.primary_location
   resource_group_name = azurerm_resource_group.example.name
-  sku                 = "Standard"
+  # sku                 = "Standard"
+  sku                 = "Premium"       # Change to Premium
 }
 
 # Secondary Service Bus Namespace
@@ -46,7 +47,8 @@ resource "azurerm_servicebus_namespace" "secondary" {
   name                = var.secondary_namespace
   location            = var.secondary_location
   resource_group_name = azurerm_resource_group.example.name
-  sku                 = "Standard"
+  # sku                 = "Standard"
+  sku                 = "Premium"       # Change to Premium
 }
 
 # Service Bus Queue
