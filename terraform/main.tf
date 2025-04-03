@@ -40,6 +40,7 @@ resource "azurerm_servicebus_namespace" "primary" {
   resource_group_name = azurerm_resource_group.example.name
   # sku                 = "Standard"
   sku                 = "Premium"       # Change to Premium
+  capacity            = 1   # Change to 1, 2, 4, 8, or 16
 }
 
 # Secondary Service Bus Namespace
@@ -49,6 +50,7 @@ resource "azurerm_servicebus_namespace" "secondary" {
   resource_group_name = azurerm_resource_group.example.name
   # sku                 = "Standard"
   sku                 = "Premium"       # Change to Premium
+  capacity            = 1   # Change to 1, 2, 4, 8, or 16
 }
 
 # Service Bus Queue
