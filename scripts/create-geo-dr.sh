@@ -4,5 +4,11 @@ NAMESPACE_PRIMARY="PrimaryEISNamespace"
 NAMESPACE_SECONDARY="SecondaryEISNamespace"
 ALIAS_NAME="TransactionAlias"
 
-az servicebus georecovery-alias set --resource-group $RESOURCE_GROUP --namespace-name $NAMESPACE_PRIMARY --alias-name $ALIAS_NAME --partner-namespace $NAMESPACE_SECONDARY
+# Set Geo-Disaster Recovery alias
+az servicebus georecovery-alias set \
+  --resource-group $RESOURCE_GROUP \
+  --namespace-name $NAMESPACE_PRIMARY \
+  --alias $ALIAS_NAME \
+  --partner-namespace $NAMESPACE_SECONDARY
+
 echo "Geo-Disaster Recovery alias configured successfully."

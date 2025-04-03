@@ -213,14 +213,14 @@ jobs:
                        -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
 
 
-    # Run Azure CLI scripts for Service Bus setup
-    - name: Create Service Bus Namespaces
-      run: |
-        bash scripts/create-servicebus.sh
+    # # Run Azure CLI scripts for Service Bus setup
+    # - name: Create Service Bus Namespaces
+    #   run: |
+    #     bash scripts/create-servicebus.sh
 
-    - name: Configure Geo-Disaster Recovery
-      run: |
-        bash scripts/create-geo-dr.sh
+    # - name: Configure Geo-Disaster Recovery
+    #   run: |
+    #     bash scripts/create-geo-dr.sh
 
     # Deploy to AKS
     - name: Deploy to AKS
