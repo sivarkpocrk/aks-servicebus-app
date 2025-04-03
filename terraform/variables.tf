@@ -67,3 +67,25 @@ variable "client_secret" {
 variable "tenant_id" {
   description = "Azure Tenant ID"
 }
+
+# Backend Storage Account Name
+variable "backend_storage_account_name" {
+  description = "Name of the storage account for Terraform backend"
+  type        = string
+  default     = "akssiva"
+}
+
+# Backend Storage Container Name
+variable "backend_container_name" {
+  description = "Name of the storage container for Terraform backend"
+  type        = string
+  default     = "tfstate"
+}
+
+# Backend Key
+variable "backend_key" {
+  description = "Name of the key for Terraform state"
+  type        = string
+  default     = "terraform.tfstate"
+}
+
