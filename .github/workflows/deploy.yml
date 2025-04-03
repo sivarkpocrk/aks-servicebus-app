@@ -203,15 +203,18 @@ jobs:
                        -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
                        -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
 
-    # Terraform Apply
+    # Terraform Apply and Export Outputs
     - name: Terraform Apply
-      working-directory: ./terraform
       run: |
-        terraform apply -auto-approve -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
-                       -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
-                       -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
-                       -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
-
+        terraform apply -auto-approve \
+          -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+          -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+          -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+        export PRIMARY_CONNECTION_STR=$(terraform output -raw primary_connection_string)
+        export SECONDARY_CONNECTION_STR=$(terraform output -raw secondary_connection_string)
+        echo "PRIMARY_CONNECTION_STR=$PRIMARY_CONNECTION_STR" >> $GITHUB_ENV
+        echo "SECONDARY_CONNECTION_STR=$SECONDARY_CONNECTION_STR" >> $GITHUB_ENV
 
     # # Run Azure CLI scripts for Service Bus setup
     # - name: Create Service Bus Namespaces
@@ -225,6 +228,10 @@ jobs:
     # Deploy to AKS
     - name: Deploy to AKS
       run: |
+        kubectl create secret generic servicebus-secrets \
+          --from-literal=primary-connection="$PRIMARY_CONNECTION_STR" \
+          --from-literal=secondary-connection="$SECONDARY_CONNECTION_STR" \
+          -n transaction-namespace
         bash scripts/aks-deploy.sh
 
     # Verify deployment

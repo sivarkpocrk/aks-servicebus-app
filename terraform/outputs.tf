@@ -1,3 +1,16 @@
+# Outputs for Service Bus Connection Strings
+output "primary_connection_string" {
+  description = "Primary Service Bus connection string"
+  value       = azurerm_servicebus_namespace.primary.default_primary_connection_string
+  sensitive   = true
+}
+
+output "secondary_connection_string" {
+  description = "Secondary Service Bus connection string"
+  value       = azurerm_servicebus_namespace.secondary.default_primary_connection_string
+  sensitive   = true
+}
+
 # Display Primary Namespace ID
 output "primary_namespace_id" {
   description = "ID of the primary Service Bus namespace"
